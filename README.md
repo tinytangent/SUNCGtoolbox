@@ -1,6 +1,6 @@
 # SUNCG Data Documentation 
 We provide a simple C++ based toolbox for the SUNCG dataset.  
-Please see our [webpage](http://suncg.cs.princeton.edu) and [paper](http://sscnet.cs.princeton.edu) for more details about the data and downloads.
+Please see our [webpage](http://suncg.cs.princeton.edu) and [paper](https://arxiv.org/pdf/1611.08974v1.pdf) for more details about the data and downloads.
 
 ### Data Organization 
 The downloaded and unzipped SUNCG files should be organized as follows:
@@ -90,7 +90,7 @@ make mesa
 
 ###  Basic Functionalities 
 
-###### Viewing the scene (requires compiling with GPU)
+#### Viewing the scene (requires compiling with GPU)
 
 ```shell
 cd data_root/house/<sceneid>/
@@ -113,7 +113,7 @@ Other function keys
 - "Space": print out current camera 
 
   
-###### Convert to OBJ+MTL
+#### Convert to OBJ+MTL
 
 ```shell
 cd data_root/projects/<sceneid>/
@@ -123,7 +123,7 @@ code_root/bin/x86_64/scn2iscn house.json house.obj
 It will write out "house.obj" and "house.mtl" in the current folder.
 
 
-###### Generating Cameras
+#### Generating Cameras
 
 ```shell
 cd data_root/projects/<sceneid>/
@@ -175,6 +175,21 @@ room, lobby, storage, boiler room, balcony, loggia, terrace,
 entryway, passenger elevator, freight elevator, aeration, garage and gym.
 
 Object category mapping between SUNCG to NYU depth V2 40 object class can be found in ``$data_root/metadata/ModelClassMapping.csv``.
+
+
+
+### Bibtex
+
+If you find SUNCG useful in your research, please consider citing:
+
+    @article{song2016ssc, 
+        title= {Semantic Scene Completion from a Single Depth Image}, 
+        author= {Song, Shuran and Yu, Fisher and Zeng, Andy and Chang, Angel X and Savva, Manolis and Funkhouser, Thomas}, 
+        journal={arXiv preprint arXiv:1611.08974}, 
+        year={2016} 
+    }
+
+
 
 ### GAPS README ###
 This toolbox is adapted from [GAPS](github.com/tomfunkhouser/gaps) written by [Thomas Funkhouser](http://www.cs.princeton.edu/~funk/). Here is the orignal GAPS README:
