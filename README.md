@@ -60,7 +60,7 @@ house.json
 The code is organized as follows:
 
 ```shell
-code_root
+gaps
     |-- pkgs - source and include files for all packages (software libraries)
     |-- apps - source files for several applications and example programs
     |-- makefiles - unix-style make file definitions
@@ -74,7 +74,7 @@ code_root
 Compile with OpenGL, it will use GPU for rendering:
 
 ```shell
-cd code_root
+cd gaps
 make clean 
 make 
 ```
@@ -82,7 +82,7 @@ make
 Compile with OSMesa, it will use CPU for off-screen rendering:
 
 ```shell
-cd code_root
+cd gaps
 make clean 
 make mesa
 ```
@@ -94,7 +94,7 @@ make mesa
 
 ```shell
 cd data_root/house/<sceneid>/
-code_root/bin/x86_64/sceneview house.json -v 
+gaps/bin/x86_64/sceneview house.json -v 
 ```
 
 Camera Controls
@@ -117,7 +117,7 @@ Other function keys
 
 ```shell
 cd data_root/projects/<sceneid>/
-code_root/bin/x86_64/scn2iscn house.json house.obj
+gaps/bin/x86_64/scn2iscn house.json house.obj
 ```
 
 It will write out "house.obj" and "house.mtl" in the current folder.
@@ -127,7 +127,7 @@ It will write out "house.obj" and "house.mtl" in the current folder.
 
 ```shell
 cd data_root/projects/<sceneid>/
-code_root/bin/x86_64/scn2cam house.json outputcamerasfile  -categories ModelCategoryMapping.csv  -v
+gaps/bin/x86_64/scn2cam house.json outputcamerasfile  -categories ModelCategoryMapping.csv  -v
 ```
 
 Input options
@@ -140,7 +140,7 @@ Use the following command to check the generated camera file.
 Press key "c" to show the camera. Press key "v" to go though each view point.
 
 ```shell
-code_root/bin/x86_64/sceneview house.json -cameras outputcamerasfile
+gaps/bin/x86_64/sceneview house.json -cameras outputcamerasfile
 ```
 
 
@@ -148,7 +148,7 @@ code_root/bin/x86_64/sceneview house.json -cameras outputcamerasfile
 
 ```shell
 cd data_root/projects/<sceneid>/
-code_root/bin/x86_64/scn2img house.json inputcamerasfile outputimagedirectory -v
+gaps/bin/x86_64/scn2img house.json inputcamerasfile outputimagedirectory -v
 ```
 
 The program will generate the following files, you can use the corresponding flags to choose which files to generate:
