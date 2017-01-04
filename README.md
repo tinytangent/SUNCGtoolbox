@@ -177,7 +177,7 @@ entryway, passenger elevator, freight elevator, aeration, garage and gym.
 Object category mapping between SUNCG to NYU depth V2 40 object class can be found in ``$data_root/metadata/ModelClassMapping.csv``.
 
 ### GAPS README ###
-This toolbox is adapted from [GAPS](github.com/tomfunkhouser/gaps) written by [Thomas Funkhouser][http://www.cs.princeton.edu/~funk/]. Here is the orignal GAPS README:
+This toolbox is adapted from [GAPS](github.com/tomfunkhouser/gaps) written by [Thomas Funkhouser](http://www.cs.princeton.edu/~funk/). Here is the orignal GAPS README:
 
 GAPS Users -
 
