@@ -1,0 +1,4 @@
+gaps/pkgs/*/*.o
+gaps/apps/*/*.o
+gaps/lib/*/*.a
+gaps/bin/*/*
