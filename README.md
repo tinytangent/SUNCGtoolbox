@@ -1,6 +1,6 @@
 # SUNCG Data Documentation 
 We provide a simple C++ based toolbox for the SUNCG dataset.  
-Please see our [http://suncg.cs.princeton.edu][project webpage] and [http://sscnet.cs.princeton.edu][paper] for more details about the data and downloads.
+Please see our [webpage](http://suncg.cs.princeton.edu) and [paper](http://sscnet.cs.princeton.edu) for more details about the data and downloads.
 
 ### Data Organization 
 The downloaded and unzipped SUNCG files should be organized as follows:
@@ -177,7 +177,7 @@ entryway, passenger elevator, freight elevator, aeration, garage and gym.
 Object category mapping between SUNCG to NYU depth V2 40 object class can be found in ``$data_root/metadata/ModelClassMapping.csv``.
 
 ### GAPS README ###
-This toolbox is adapted from [github.com/tomfunkhouser/gaps][GAPS] written by [http://www.cs.princeton.edu/~funk/][Thomas Funkhouser]. Here is the orignal GAPS README:
+This toolbox is adapted from [GAPS](github.com/tomfunkhouser/gaps) written by [Thomas Funkhouser][http://www.cs.princeton.edu/~funk/]. Here is the orignal GAPS README:
 
 GAPS Users -
 
