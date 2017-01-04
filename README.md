@@ -148,7 +148,7 @@ gaps/bin/x86_64/sceneview house.json -cameras outputcamerasfile
 
 ```shell
 cd data_root/projects/<sceneid>/
-gaps/bin/x86_64/scn2img house.json inputcamerasfile outputimagedirectory -v
+gaps/bin/x86_64/scn2img house.json inputcamerasfile outputimagedirectory -categories ModelCategoryMapping.csv  -v
 ```
 
 The program will generate the following files, you can use the corresponding flags to choose which files to generate:
@@ -162,7 +162,7 @@ The program will generate the following files, you can use the corresponding fla
 - capture_brdf_images: Brdf image saved as JPEG.
 - capture_material_images: Material index map saved as PNG.
 - capture_node_images: Node index map (instance segmentation).
-- capture_category_images: Object category map saved as PNG (need  input "-categories - categories_file" to map from object id to category id).
+- capture_category_images: Object category map saved as PNG (need  input "-categories ModelCategoryMapping.csv" to map from modelId to index).
 - capture_boundary_images: Combine boundary map with node boundaries (first bit), silhouette boundaries (second bit), where depth difference is > 10% of depth (third bit), crease boundaries (fourth bit).
 
 
