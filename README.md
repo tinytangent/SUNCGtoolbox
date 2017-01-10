@@ -18,7 +18,6 @@ data_root
         |-- <objectid>
             |--objectid.obj
     |-- texture
-    |-- metadata
 ```
 
 
@@ -67,6 +66,9 @@ gaps
     |-- vc - visual studio solution files
     |-- lib - archive library (.lib) files (created during compilation)
     |-- bin - executable files (created during compilation)
+metadata
+    |-- ModelCategoryMapping.csv
+    |-- suncgModelLights.json
 ```
 
 
