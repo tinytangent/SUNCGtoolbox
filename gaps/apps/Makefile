@@ -20,6 +20,7 @@ release:
 	$(MAKE) target "TARGET=$@"
 
 target: 
+	cd panocam; $(MAKE) $(TARGET)
 	cd img2img; $(MAKE) $(TARGET)
 	cd msh2msh; $(MAKE) $(TARGET)
 	cd msh2grd; $(MAKE) $(TARGET)

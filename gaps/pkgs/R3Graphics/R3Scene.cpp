@@ -59,6 +59,9 @@ R3Scene::
 
   // Delete filename
   if (filename) free(filename);
+
+  // Delete name
+  if (name) free(name);
 }
 
 
@@ -872,7 +875,7 @@ Draw(const R3DrawFlags draw_flags) const
 ////////////////////////////////////////////////////////////////////////
 
 int R3Scene::
-ReadFile(const char *filename)
+ReadFile(const char *filename, R3SceneNode *parent_node)
 {
   // Parse input filename extension
   const char *extension;
@@ -883,31 +886,31 @@ ReadFile(const char *filename)
 
   // Read file of appropriate type
   if (!strncmp(extension, ".scn", 4)) {
-    if (!ReadPrincetonFile(filename)) return 0;
+    if (!ReadPrincetonFile(filename, parent_node)) return 0;
   }
   else if (!strncmp(extension, ".ssc", 4)) {
-    if (!ReadParseFile(filename)) return 0;
+    if (!ReadParseFile(filename, parent_node)) return 0;
   }
   else if (!strncmp(extension, ".txt", 4)) {
-    if (!ReadSupportHierarchyFile(filename)) return 0;
+    if (!ReadSupportHierarchyFile(filename, parent_node)) return 0;
   }
   else if (!strncmp(extension, ".hier", 5)) {
-    if (!ReadGrammarHierarchyFile(filename)) return 0;
+    if (!ReadGrammarHierarchyFile(filename, parent_node)) return 0;
   }
   else if (!strncmp(extension, ".obj", 4)) {
-    if (!ReadObjFile(filename)) return 0;
+    if (!ReadObjFile(filename, parent_node)) return 0;
   }
   else if (!strncmp(extension, ".off", 4)) {
-    if (!ReadMeshFile(filename)) return 0;
+    if (!ReadMeshFile(filename, parent_node)) return 0;
   }
   else if (!strncmp(extension, ".ply", 4)) {
-    if (!ReadMeshFile(filename)) return 0;
+    if (!ReadMeshFile(filename, parent_node)) return 0;
   }
   else if (!strncmp(extension, ".rct", 4)) {
-    if (!ReadRectangleFile(filename)) return 0;
+    if (!ReadRectangleFile(filename, parent_node)) return 0;
   }
   else if (!strncmp(extension, ".json", 5)) {
-    if (!ReadSUNCGFile(filename)) return 0;
+    if (!ReadSUNCGFile(filename, parent_node)) return 0;
   }
   else {
     fprintf(stderr, "Unable to read file %s (unrecognized extension: %s)\n", filename, extension);
@@ -944,18 +947,9 @@ WriteFile(const char *filename) const
     return 0;
   }
 
-  // TEMPORARY
-  ((R3Scene *) this)->RemoveReferences();
-
   // Write file of appropriate type
-  if (!strncmp(extension, ".txt", 4)) {
-    if (!WriteSupportHierarchyFile(filename)) return 0;
-  }
-  else if (!strncmp(extension, ".scn", 4)) {
+  if (!strncmp(extension, ".scn", 4)) {
     if (!WritePrincetonFile(filename)) return 0;
-  }
-  else if (!strncmp(extension, ".ssc", 4)) {
-    if (!WriteParseFile(filename)) return 0;
   }
   else if (!strncmp(extension, ".obj", 4)) {
     if (!WriteObjFile(filename)) return 0;
@@ -1272,6 +1266,7 @@ ReadObj(R3Scene *scene, R3SceneNode *node, const char *dirname, FILE *fp, RNArra
   R3Material *material = NULL;
   RNSymbolTable<R3Material *> material_symbol_table;
   RNArray<R2Point *> texture_coords;
+  RNArray<R3Vector *> normals;
   RNArray<R3TriangleVertex *> verts;
   RNArray<R3Triangle *> tris;
   while (fgets(buffer, 1023, fp)) {
@@ -1318,84 +1313,75 @@ ReadObj(R3Scene *scene, R3SceneNode *node, const char *dirname, FILE *fp, RNArra
       R2Point *vt = new R2Point(u, v);
       texture_coords.Insert(vt);
     }
+    else if (!strcmp(keyword, "vn")) {
+      // Read texture coordinates
+      double x, y, z;
+      if (sscanf(bufferp, "%s%lf%lf%lf", keyword, &x, &y, &z) != 4) {
+        fprintf(stderr, "Syntax error on line %d in OBJ file", line_count);
+        return 0;
+      }
+
+      // Create normal
+      R3Vector *vn = new R3Vector(x, y, z);
+      normals.Insert(vn);
+    }
     else if (!strcmp(keyword, "f")) {
       // Read vertex indices
       int quad = 1;
-      char s1[128], s2[128], s3[128], s4[128] = { '\0' };
-      if (sscanf(bufferp, "%s%s%s%s%s", keyword, s1, s2, s3, s4) != 5) {
+      char s[4][128] = { { '\0' }, { '\0' }, { '\0' },{ '\0' } }; 
+      if (sscanf(bufferp, "%s%s%s%s%s", keyword, s[0], s[1], s[2], s[3]) != 5) {
         quad = 0;;
-        if (sscanf(bufferp, "%s%s%s%s", keyword, s1, s2, s3) != 4) {
+        if (sscanf(bufferp, "%s%s%s%s", keyword, s[0], s[1], s[2]) != 4) {
           fprintf(stderr, "Syntax error on line %d in OBJ file", line_count);
           return 0;
         }
       }
 
       // Parse vertex indices
-      int vi1 = -1, vi2 = -1, vi3 = -1, vi4 = -1;
-      int ti1 = -1, ti2 = -1, ti3 = -1, ti4 = -1;
-      char *p1 = strchr(s1, '/'); 
-      if (p1) { *p1 = 0; vi1 = atoi(s1); p1++; if (*p1) ti1 = atoi(p1); }
-      else { vi1 = atoi(s1); ti1 = vi1; }
-      char *p2 = strchr(s2, '/'); 
-      if (p2) { *p2 = 0; vi2 = atoi(s2); p2++; if (*p2) ti2 = atoi(p2); }
-      else { vi2 = atoi(s2); ti2 = vi2; }
-      char *p3 = strchr(s3, '/'); 
-      if (p3) { *p3 = 0; vi3 = atoi(s3); p3++; if (*p3) ti3 = atoi(p3); }
-      else { vi3 = atoi(s3); ti3 = vi3; }
-      if (quad) {
-        char *p4 = strchr(s4, '/'); 
-        if (p4) { *p4 = 0; vi4 = atoi(s4); p4++; if (*p4) ti4 = atoi(p4); }
-        else { vi4 = atoi(s4); ti4 = vi4; }
-      }
-
-      // Get vertices
-      R3TriangleVertex *v1 = verts.Kth(vi1-1);
-      R3TriangleVertex *v2 = verts.Kth(vi2-1);
-      R3TriangleVertex *v3 = verts.Kth(vi3-1);
-      R3TriangleVertex *v4 = (quad) ? verts.Kth(vi4-1) : NULL;
-      
-      // Assign texture coordinates
-      if ((ti1 > 0) && ((ti1-1) < texture_coords.NEntries())) {
-        R2Point texcoords = *(texture_coords.Kth(ti1-1));
-        if (!(v1->Flags()[R3_VERTEX_TEXTURE_COORDS_DRAW_FLAG])) v1->SetTextureCoords(texcoords);
-        else if (!R2Contains(texcoords, v1->TextureCoords())) { v1 = new R3TriangleVertex(v1->Position(), v1->Normal(), texcoords); }
-      }
-      if ((ti2 > 0) && ((ti2-1) < texture_coords.NEntries())) {
-        R2Point texcoords = *(texture_coords.Kth(ti2-1));
-        if (!(v2->Flags()[R3_VERTEX_TEXTURE_COORDS_DRAW_FLAG])) v2->SetTextureCoords(texcoords);
-        else if (!R2Contains(texcoords, v2->TextureCoords())) { v2 = new R3TriangleVertex(v2->Position(), v2->Normal(), texcoords); }
-      }
-      if ((ti3 > 0) && ((ti3-1) < texture_coords.NEntries())) {
-        R2Point texcoords = *(texture_coords.Kth(ti3-1));
-        if (!(v3->Flags()[R3_VERTEX_TEXTURE_COORDS_DRAW_FLAG])) v3->SetTextureCoords(texcoords);
-        else if (!R2Contains(texcoords, v3->TextureCoords())) { v3 = new R3TriangleVertex(v3->Position(), v3->Normal(), texcoords); }
-      }
-      if (quad) {
-        if ((ti4 > 0) && ((ti4-1) < texture_coords.NEntries())) {
-          R2Point texcoords = *(texture_coords.Kth(ti4-1));
-          if (!(v4->Flags()[R3_VERTEX_TEXTURE_COORDS_DRAW_FLAG])) v4->SetTextureCoords(texcoords);
-          else if (!R2Contains(texcoords, v4->TextureCoords())) { v4 = new R3TriangleVertex(v4->Position(), v4->Normal(), texcoords); }
+      int n = (quad) ? 4 : 3;
+      R3TriangleVertex *v[4] = { NULL, NULL, NULL, NULL };
+      for (int i = 0; i < n; i++) {
+        char *sv = s[i];
+        char *st = strchr(sv, '/');
+        if (st) *(st++) = 0;
+        char *sn = (st) ? strchr(st, '/') : NULL;
+        if (sn) *(sn++) = 0;
+        if (sn && (strlen(sn) == 0)) sn = NULL; 
+        if (st && (strlen(st) == 0)) st = NULL;
+        int vi = (sv) ? atoi(sv) : 0;
+        int ti = (st) ? atoi(st) : 0;
+        int ni = (sn) ? atoi(sn) : 0;
+        v[i] = verts.Kth(vi-1);
+        if ((ti > 0) && ((ti-1) < texture_coords.NEntries())) {
+          R2Point texcoords = *(texture_coords.Kth(ti-1));
+          if (!(v[i]->Flags()[R3_VERTEX_TEXTURE_COORDS_DRAW_FLAG])) v[i]->SetTextureCoords(texcoords);
+          else if (!R2Contains(texcoords, v[i]->TextureCoords())) { v[i] = new R3TriangleVertex(v[i]->Position(), texcoords); }
+        }
+        if ((ni > 0) && ((ni-1) < normals.NEntries())) {
+          R3Vector normal = *(normals.Kth(ni-1));
+          if (!(v[i]->Flags()[R3_VERTEX_NORMALS_DRAW_FLAG])) v[i]->SetNormal(normal);
+          else if (!R3Contains(normal, v[i]->Normal())) { v[i] = new R3TriangleVertex(v[i]->Position(), normal, v[i]->TextureCoords()); }
         }
       }
 
       // Check vertices
-      if ((v1 == v2) || (v2 == v3) || (v1 == v3)) continue;
-      if ((quad) && ((v4 == v1) || (v4 == v2) || (v4 == v3))) quad = 0;
+      if ((v[0] == v[1]) || (v[1] == v[2]) || (v[0] == v[2])) continue;
+      if ((quad) && ((v[3] == v[0]) || (v[3] == v[1]) || (v[3] == v[2]))) quad = 0;
 
       // Create first triangle
-      if (RNIsPositive(R3Distance(v1->Position(), v2->Position())) &&
-          RNIsPositive(R3Distance(v2->Position(), v3->Position())) &&
-          RNIsPositive(R3Distance(v1->Position(), v3->Position()))) {
-        R3Triangle *triangle = new R3Triangle(v1, v2, v3);
+      if (RNIsPositive(R3Distance(v[0]->Position(), v[1]->Position())) &&
+          RNIsPositive(R3Distance(v[1]->Position(), v[2]->Position())) &&
+          RNIsPositive(R3Distance(v[2]->Position(), v[0]->Position()))) {
+        R3Triangle *triangle = new R3Triangle(v[0], v[1], v[2]);
         tris.Insert(triangle);
       }
 
       // Create second triangle
       if (quad) {
-        if (RNIsPositive(R3Distance(v1->Position(), v3->Position())) &&
-            RNIsPositive(R3Distance(v3->Position(), v4->Position())) &&
-            RNIsPositive(R3Distance(v1->Position(), v4->Position()))) {
-          R3Triangle *triangle = new R3Triangle(v1, v3, v4);
+        if (RNIsPositive(R3Distance(v[0]->Position(), v[2]->Position())) &&
+            RNIsPositive(R3Distance(v[2]->Position(), v[3]->Position())) &&
+            RNIsPositive(R3Distance(v[0]->Position(), v[3]->Position()))) {
+          R3Triangle *triangle = new R3Triangle(v[0], v[2], v[3]);
           tris.Insert(triangle);
         }
       }
@@ -1473,6 +1459,12 @@ ReadObj(R3Scene *scene, R3SceneNode *node, const char *dirname, FILE *fp, RNArra
     delete vt;
   }
 
+  // Delete normals
+  for (int i = 0; i < normals.NEntries(); i++) {
+    R3Vector *vn = normals.Kth(i);
+    delete vn;
+  }
+
   // Return success
   return 1;
 }
@@ -1514,10 +1506,13 @@ ReadObj(R3Scene *scene, R3SceneNode *node, const char *filename, RNArray<R3Mater
 
 
 int R3Scene::
-ReadObjFile(const char *filename)
+ReadObjFile(const char *filename, R3SceneNode *parent_node)
 {
-  // Read obj file, and put contents in root node
-  return ReadObj(this, root, filename);
+  // Check/set parent node
+  if (!parent_node) parent_node = root;
+  
+  // Read obj file, and put contents in parent node 
+  return ReadObj(this, parent_node, filename);
 }
 
 
@@ -1610,8 +1605,8 @@ WriteObjMtlFile(const R3Scene *scene, const char *dirname, const char *mtlname)
 
 
 
-int
-WriteObj(const R3Scene *scene, R3SceneNode *node, const R3Affine& transformation, int &ngroups, int& nvertices, int& ntexture_coords, FILE *fp)
+static int
+WriteObj(const R3Scene *scene, R3SceneNode *node, const R3Affine& transformation, int &ngroups, int& nvertices, int& nnormals, int& ntexture_coords, FILE *fp)
 {
   // Write group name
   if (node->Name()) fprintf(fp, "g %s\n", node->Name());
@@ -1631,19 +1626,39 @@ WriteObj(const R3Scene *scene, R3SceneNode *node, const R3Affine& transformation
       R3Shape *shape = element->Shape(j);
       if (shape->ClassID() == R3TriangleArray::CLASS_ID()) {
         R3TriangleArray *triangles = (R3TriangleArray *) shape;
+        if (triangles->NVertices() == 0) continue;
+        
+        // Allocate indices for positions, texture coordinates, and normals
+        int *pi = new int [ triangles->NVertices() ];
+        for (int k = 0; k < triangles->NVertices(); k++) pi[k] = -1;
+        int *ni = new int [ triangles->NVertices() ];
+        for (int k = 0; k < triangles->NVertices(); k++) ni[k] = -1;
+        int *ti = new int [ triangles->NVertices() ];
+        for (int k = 0; k < triangles->NVertices(); k++) ti[k] = -1;
 
         // Write vertices
         for (int k = 0; k < triangles->NVertices(); k++) {
           R3TriangleVertex *v = triangles->Vertex(k);
-          R3Point p = v->Position();
-          R2Point t = v->TextureCoords();
-          p.Transform(transformation);
-          fprintf(fp, "v %g %g %g\n", p.X(), p.Y(), p.Z());
-          fprintf(fp, "vt %g %g\n", t.X(), t.Y());
-          v->SetMark(++nvertices); // Store index of this vertex in whole file (starting at index=1)
+          v->SetMark(k);
+          if (TRUE) {
+            R3Point p = v->Position();
+            p.Transform(transformation);
+            fprintf(fp, "v %g %g %g\n", p.X(), p.Y(), p.Z());
+            pi[k] = ++nvertices;
+          }
+          if (v->Flags()[R3_VERTEX_NORMALS_DRAW_FLAG]) {
+            R3Vector n = v->Normal();
+            n.Transform(transformation);
+            fprintf(fp, "vn %g %g %g\n", n.X(), n.Y(), n.Z());
+            ni[k] = ++nnormals;
+          }
+          if (v->Flags()[R3_VERTEX_TEXTURE_COORDS_DRAW_FLAG]) {
+            R2Point t = v->TextureCoords();
+            fprintf(fp, "vt %g %g\n", t.X(), t.Y());
+            ti[k] = ++ntexture_coords;
+          }
         }
        
-
         // Write triangles
         for (int k = 0; k < triangles->NTriangles(); k++) {
           R3Triangle *triangle = triangles->Triangle(k);
@@ -1653,15 +1668,28 @@ WriteObj(const R3Scene *scene, R3SceneNode *node, const R3Affine& transformation
           unsigned int i0 = v0->Mark();
           unsigned int i1 = v1->Mark();
           unsigned int i2 = v2->Mark();
-          if (triangle->Flags()[R3_VERTEX_TEXTURE_COORDS_DRAW_FLAG]) {
-            if (transformation.IsMirrored()) fprintf(fp, "f %u/%u %u/%u %u/%u\n", i2, i2, i1, i1, i0, i0);
-            else fprintf(fp, "f %u/%u %u/%u %u/%u\n", i0, i0, i1, i1, i2, i2);
+          if (triangle->Flags()[R3_VERTEX_TEXTURE_COORDS_DRAW_FLAG] && triangle->Flags()[R3_VERTEX_NORMALS_DRAW_FLAG]) {
+            if (transformation.IsMirrored()) fprintf(fp, "f %u/%u/%u %u/%u/%u %u/%u/%u\n", pi[i2], ti[i2], ni[i2], pi[i1], ti[i1], ni[i1], pi[i0], ti[i0], ni[i0]);
+            else fprintf(fp, "f %u/%u/%u %u/%u/%u %u/%u/%u\n", pi[i0], ti[i0], ni[i0], pi[i1], ti[i1], ni[i1], pi[i2], ti[i2], ni[i2]);
+          }
+          else if (triangle->Flags()[R3_VERTEX_TEXTURE_COORDS_DRAW_FLAG]) {
+            if (transformation.IsMirrored()) fprintf(fp, "f %u/%u %u/%u %u/%u\n",  pi[i2], ti[i2],  pi[i1], ti[i1],  pi[i0], ti[i0]);
+            else fprintf(fp, "f %u/%u %u/%u %u/%u\n",  pi[i0], ti[i0],  pi[i1], ti[i1],  pi[i2], ti[i2]);
+          }
+          else if (triangle->Flags()[R3_VERTEX_NORMALS_DRAW_FLAG]) {
+            if (transformation.IsMirrored()) fprintf(fp, "f %u//%u %u//%u %u//%u\n",  pi[i2], ni[i2],  pi[i1], ni[i1],  pi[i0], ni[i0]);
+            else fprintf(fp, "f %u//%u %u//%u %u//%u\n",  pi[i0], ni[i0],  pi[i1], ni[i1],  pi[i2], ni[i2]);
           }
           else {
-            if (transformation.IsMirrored()) fprintf(fp, "f %u %u %u\n", i2, i1, i0);
-            else fprintf(fp, "f %u %u %u\n", i0, i1, i2);
+            if (transformation.IsMirrored()) fprintf(fp, "f %u %u %u\n",  pi[i2], pi[i1], pi[i0]);
+            else fprintf(fp, "f %u %u %u\n", pi[i0], pi[i1], pi[i2]);
           }
         }
+
+        // Delete indices for positions, texture coordinates, and normals
+        delete [] pi;
+        delete [] ni;
+        delete [] ti;
       }
     }
   }
@@ -1676,7 +1704,7 @@ WriteObj(const R3Scene *scene, R3SceneNode *node, const R3Affine& transformation
     child_transformation.Transform(child->Transformation());
 
     // Write child
-    if (!WriteObj(scene, child, child_transformation, ngroups, nvertices, ntexture_coords, fp)) return 0;
+    if (!WriteObj(scene, child, child_transformation, ngroups, nvertices, nnormals, ntexture_coords, fp)) return 0;
   }
 
   // Return success
@@ -1685,7 +1713,7 @@ WriteObj(const R3Scene *scene, R3SceneNode *node, const R3Affine& transformation
 
 
 
-int 
+static int 
 WriteObj(const R3Scene *scene, R3SceneNode *node, const char *filename) 
 {
   // Determine directory name (for texture image files)
@@ -1731,8 +1759,9 @@ WriteObj(const R3Scene *scene, R3SceneNode *node, const char *filename)
   // Write nodes 
   int ngroups = 0;
   int nvertices = 0;
+  int nnormals = 0;
   int ntexture_coords = 0;
-  if (!WriteObj(scene, node, node->Transformation(), ngroups, nvertices, ntexture_coords, fp)) {
+  if (!WriteObj(scene, node, node->Transformation(), ngroups, nvertices, nnormals, ntexture_coords, fp)) {
     fprintf(stderr, "Unable to write OBJ file %s\n", filename);
     fclose(fp);
     return 0;
@@ -1750,6 +1779,9 @@ WriteObj(const R3Scene *scene, R3SceneNode *node, const char *filename)
 int R3Scene::
 WriteObjFile(const char *filename) const
 {
+  // Remove references (note that this changes scene structure :( )
+  ((R3Scene *) this)->RemoveReferences();
+
   // Write obj file
   return WriteObj(this, root, filename);
 }
@@ -1763,6 +1795,7 @@ WriteObjFile(const char *filename) const
 static R3TriangleArray *
 ReadMesh(const char *filename)
 {
+  // Read mesh file
   R3Mesh mesh;
   if (!mesh.ReadFile(filename)) {
     fprintf(stderr, "Unable to read mesh %s\n", filename);
@@ -1814,8 +1847,11 @@ ReadMesh(const char *filename)
  
 
 int R3Scene::
-ReadMeshFile(const char *filename)
+ReadMeshFile(const char *filename, R3SceneNode *parent_node)
 {
+  // Check/set parent node
+  if (!parent_node) parent_node = root;
+
   // Load triangles into scene
   R3TriangleArray *shape = ReadMesh(filename);
   if (!shape) return 0;
@@ -1823,7 +1859,7 @@ ReadMeshFile(const char *filename)
   element->InsertShape(shape);
   R3SceneNode *node = new R3SceneNode(this);
   node->InsertElement(element);
-  root->InsertChild(node);
+  parent_node->InsertChild(node);
   
   // Return success
   return 1;
@@ -1877,9 +1913,12 @@ FindPrincetonMaterialAndElement(R3Scene *scene, R3SceneNode *node,
 
 
 
-static int
-ReadPrinceton(R3Scene *scene, R3SceneNode *node, const char *filename)
+int R3Scene::
+ReadPrincetonFile(const char *filename, R3SceneNode *parent_node)
 {
+  // Get/set parent_node
+  if (!parent_node) parent_node = root;
+  
   // Open file
   FILE *fp;
   if (!(fp = fopen(filename, "r"))) {
@@ -1896,7 +1935,7 @@ ReadPrinceton(R3Scene *scene, R3SceneNode *node, const char *filename)
   const int max_depth = 1024;
   R3SceneNode *group_nodes[max_depth] = { NULL };
   R3Material *group_materials[max_depth] = { NULL };
-  group_nodes[0] = (node) ? node : scene->Root();
+  group_nodes[0] = parent_node;
   int depth = 0;
 
   // Read body
@@ -1924,7 +1963,7 @@ ReadPrinceton(R3Scene *scene, R3SceneNode *node, const char *filename)
       R3Triangle *triangle = new R3Triangle(v1, v2, v3);
 
       // Get material and element from m
-      if (!FindPrincetonMaterialAndElement(scene, group_nodes[depth], parsed_materials, m, group_materials[depth], material, element)) {
+      if (!FindPrincetonMaterialAndElement(this, group_nodes[depth], parsed_materials, m, group_materials[depth], material, element)) {
         fprintf(stderr, "Invalid material id at command %d in file %s\n", command_number, filename);
         return 0;
       }
@@ -1950,7 +1989,7 @@ ReadPrinceton(R3Scene *scene, R3SceneNode *node, const char *filename)
       R3Box *box = new R3Box(p1, p2);
 
       // Get material and element from m
-      if (!FindPrincetonMaterialAndElement(scene, group_nodes[depth], parsed_materials, m, group_materials[depth], material, element)) {
+      if (!FindPrincetonMaterialAndElement(this, group_nodes[depth], parsed_materials, m, group_materials[depth], material, element)) {
         fprintf(stderr, "Invalid material id at command %d in file %s\n", command_number, filename);
         return 0;
       }
@@ -1972,7 +2011,7 @@ ReadPrinceton(R3Scene *scene, R3SceneNode *node, const char *filename)
       R3Sphere *sphere = new R3Sphere(c, r);
 
       // Get material and element from m
-      if (!FindPrincetonMaterialAndElement(scene, group_nodes[depth], parsed_materials, m, group_materials[depth], material, element)) {
+      if (!FindPrincetonMaterialAndElement(this, group_nodes[depth], parsed_materials, m, group_materials[depth], material, element)) {
         fprintf(stderr, "Invalid material id at command %d in file %s\n", command_number, filename);
         return 0;
       }
@@ -1996,7 +2035,7 @@ ReadPrinceton(R3Scene *scene, R3SceneNode *node, const char *filename)
       R3Cylinder *cylinder = new R3Cylinder(p1, p2, r);
 
       // Get material and element from m
-      if (!FindPrincetonMaterialAndElement(scene, group_nodes[depth], parsed_materials, m, group_materials[depth], material, element)) {
+      if (!FindPrincetonMaterialAndElement(this, group_nodes[depth], parsed_materials, m, group_materials[depth], material, element)) {
         fprintf(stderr, "Invalid material id at command %d in file %s\n", command_number, filename);
         return 0;
       }
@@ -2020,7 +2059,7 @@ ReadPrinceton(R3Scene *scene, R3SceneNode *node, const char *filename)
       R3Cone *cone = new R3Cone(p1, p2, r);
 
       // Get material and element from m
-      if (!FindPrincetonMaterialAndElement(scene, group_nodes[depth], parsed_materials, m, group_materials[depth], material, element)) {
+      if (!FindPrincetonMaterialAndElement(this, group_nodes[depth], parsed_materials, m, group_materials[depth], material, element)) {
         fprintf(stderr, "Invalid material id at command %d in file %s\n", command_number, filename);
         return 0;
       }
@@ -2050,7 +2089,7 @@ ReadPrinceton(R3Scene *scene, R3SceneNode *node, const char *filename)
       if (!mesh) return 0;
 
       // Get material and element from m
-      if (!FindPrincetonMaterialAndElement(scene, group_nodes[depth], parsed_materials, m, group_materials[depth], material, element)) {
+      if (!FindPrincetonMaterialAndElement(this, group_nodes[depth], parsed_materials, m, group_materials[depth], material, element)) {
         fprintf(stderr, "Invalid material id at command %d in file %s\n", command_number, filename);
         return 0;
       }
@@ -2073,7 +2112,7 @@ ReadPrinceton(R3Scene *scene, R3SceneNode *node, const char *filename)
       R3Cylinder *cylinder = new R3Cylinder(p1, p2, RN_BIG_EPSILON);
 
       // Get material and element from m
-      if (!FindPrincetonMaterialAndElement(scene, group_nodes[depth], parsed_materials, m, group_materials[depth], material, element)) {
+      if (!FindPrincetonMaterialAndElement(this, group_nodes[depth], parsed_materials, m, group_materials[depth], material, element)) {
         fprintf(stderr, "Invalid material id at command %d in file %s\n", command_number, filename);
         return 0;
       }
@@ -2101,7 +2140,7 @@ ReadPrinceton(R3Scene *scene, R3SceneNode *node, const char *filename)
       }
 
       // Create new node
-      R3SceneNode *node = new R3SceneNode(scene);
+      R3SceneNode *node = new R3SceneNode(this);
       node->SetTransformation(R3Affine(R4Matrix(matrix)));
       group_nodes[depth]->InsertChild(node);
 
@@ -2134,7 +2173,7 @@ ReadPrinceton(R3Scene *scene, R3SceneNode *node, const char *filename)
 
       // Create brdf
       R3Brdf *brdf = new R3Brdf(ka, kd, ks, kt, e, n, ir);
-      scene->InsertBrdf(brdf);
+      InsertBrdf(brdf);
 
       // Create texture
       R2Texture *texture = NULL;
@@ -2156,12 +2195,12 @@ ReadPrinceton(R3Scene *scene, R3SceneNode *node, const char *filename)
         
         // Create texture
         texture = new R2Texture(image);
-        scene->InsertTexture(texture);
+        InsertTexture(texture);
       }
 
       // Create material
       R3Material *material = new R3Material(brdf, texture);
-      scene->InsertMaterial(material);
+      InsertMaterial(material);
       parsed_materials.Insert(material);
     }
     else if (!strcmp(cmd, "dir_light")) {
@@ -2179,7 +2218,7 @@ ReadPrinceton(R3Scene *scene, R3SceneNode *node, const char *filename)
 
       // Create directional light
       R3DirectionalLight *light = new R3DirectionalLight(d, c);
-      scene->InsertLight(light);
+      InsertLight(light);
     }
     else if (!strcmp(cmd, "point_light")) {
       // Read data
@@ -2193,7 +2232,7 @@ ReadPrinceton(R3Scene *scene, R3SceneNode *node, const char *filename)
 
       // Create point light
       R3PointLight *light = new R3PointLight(p, c, 1, TRUE, ca, la, qa);
-      scene->InsertLight(light);
+      InsertLight(light);
     }
     else if (!strcmp(cmd, "spot_light")) {
       // Read data
@@ -2212,7 +2251,7 @@ ReadPrinceton(R3Scene *scene, R3SceneNode *node, const char *filename)
 
       // Create spot light
       R3SpotLight *light = new R3SpotLight(p, d, c, sd, sc, 1, TRUE, ca, la, qa);
-      scene->InsertLight(light);
+      InsertLight(light);
     }
     else if (!strcmp(cmd, "area_light")) {
       // Read data
@@ -2231,7 +2270,7 @@ ReadPrinceton(R3Scene *scene, R3SceneNode *node, const char *filename)
 
       // Create spot light
       R3AreaLight *light = new R3AreaLight(p, radius, d, c, 1, TRUE, ca, la, qa);
-      scene->InsertLight(light);
+      InsertLight(light);
     }
     else if (!strcmp(cmd, "camera")) {
       // Read data
@@ -2245,7 +2284,7 @@ ReadPrinceton(R3Scene *scene, R3SceneNode *node, const char *filename)
 
       // Assign camera
       R3Camera camera(e, t, u, xfov, xfov, neardist, fardist);
-      scene->SetCamera(camera);
+      SetCamera(camera);
     }
     else if (!strcmp(cmd, "include")) {
       // Read data
@@ -2264,7 +2303,7 @@ ReadPrinceton(R3Scene *scene, R3SceneNode *node, const char *filename)
       strcat(buffer, scenename);
 
       // Read scene from included file
-      if (!ReadPrinceton(scene, group_nodes[depth], buffer)) {
+      if (!ReadFile(buffer, group_nodes[depth])) {
         fprintf(stderr, "Unable to read included scene: %s\n", buffer);
         return 0;
       }
@@ -2278,7 +2317,7 @@ ReadPrinceton(R3Scene *scene, R3SceneNode *node, const char *filename)
       }
 
       // Assign background color
-      scene->SetBackground(RNRgb(r, g, b));
+      SetBackground(RNRgb(r, g, b));
     }
     else if (!strcmp(cmd, "ambient")) {
       // Read data
@@ -2289,7 +2328,7 @@ ReadPrinceton(R3Scene *scene, R3SceneNode *node, const char *filename)
       }
 
       // Assign ambient color
-      scene->SetAmbient(RNRgb(r, g, b));
+      SetAmbient(RNRgb(r, g, b));
     }
     else {
       fprintf(stderr, "Unrecognized command %d in file %s: %s\n", command_number, filename, cmd);
@@ -2305,15 +2344,6 @@ ReadPrinceton(R3Scene *scene, R3SceneNode *node, const char *filename)
 
   // Return success
   return 1;
-}
-
-
-
-int R3Scene::
-ReadPrincetonFile(const char *filename)
-{
-  // Read princeton file and insert contents into root node
-  return ReadPrinceton(this, root, filename);
 }
 
 
@@ -2342,7 +2372,7 @@ WritePrincetonMaterial(const R3Scene *scene, const R3Material *material, FILE *f
   RNRgb emission = (brdf) ? brdf->Emission() : RNblack_rgb;
   RNScalar shininess = brdf->Shininess();
   RNScalar indexofref = brdf->IndexOfRefraction();
-  const char *texture_name = (texture && texture->Name()) ? texture->Name() : "0";
+  const char *texture_name = (texture && texture->Filename()) ? texture->Filename() : "0";
   fprintf(fp, "material %g %g %g  %g %g %g  %g %g %g  %g %g %g  %g %g %g  %g %g %s\n",
     ambient.R(), ambient.G(), ambient.B(),
     diffuse.R(), diffuse.G(), diffuse.B(),
@@ -2496,6 +2526,30 @@ WritePrincetonElement(const R3Scene *scene, R3SceneElement *element,
 
 
 static int
+WritePrincetonReference(const R3Scene *scene, R3SceneReference *reference,
+  const R3Affine& transformation, FILE *fp, const char *indent)
+{
+  // Get referenced scene
+  R3Scene *referenced_scene = reference->ReferencedScene();
+
+  // Check if referenced scene has a file to reference
+  if (!referenced_scene->Filename()) {
+    // The materials will not be right if simply write referenced scene!!!
+    // So WritePrincetonFile should have removed references 
+    RNAbort("Should never get here");
+    return 0;
+  }
+
+  // Write include statement
+  fprintf(fp, "%sinclude %s\n", indent, referenced_scene->Filename());
+
+  // Return success
+  return 1;
+}
+
+
+
+static int
 WritePrincetonNode(const R3Scene *scene, const R3SceneNode *node,
   const R3Transformation& parent_transformation,
   FILE *fp, const char *indent)
@@ -2534,6 +2588,12 @@ WritePrincetonNode(const R3Scene *scene, const R3SceneNode *node,
     if (!WritePrincetonElement(scene, element, transformation, fp, child_indent)) return 0;
   }
 
+  // Write references
+  for (int i = 0; i < node->NReferences(); i++) {
+    R3SceneReference *reference = node->Reference(i);
+    if (!WritePrincetonReference(scene, reference, transformation, fp, child_indent)) return 0;
+  }
+
   // Write children
   for (int i = 0; i < node->NChildren(); i++) {
     R3SceneNode *child = node->Child(i);
@@ -2564,6 +2624,17 @@ WritePrincetonFile(const char *filename) const
 
   // Determine output directory
   const char *output_directory = ".";
+
+  // Determine if need to remove references
+  RNBoolean remove_references = FALSE;
+  for (int i = 0; i < NReferencedScenes(); i++) {
+    R3Scene *referenced_scene = ReferencedScene(i);
+    if (referenced_scene->Filename()) continue;
+    remove_references = TRUE; break;
+  }
+
+  // Remove references if necessary (this will change the scene structure :( )
+  if (remove_references) ((R3Scene *) this)->RemoveReferences();
 
   // Write color and camera 
   fprintf(fp, "background %g %g %g\n", Background().R(), Background().G(), Background().B());
@@ -2611,8 +2682,11 @@ WritePrincetonFile(const char *filename) const
 ////////////////////////////////////////////////////////////////////////
 
 int R3Scene::
-ReadSupportHierarchyFile(const char *filename)
+ReadSupportHierarchyFile(const char *filename, R3SceneNode *parent_node)
 {
+  // Get/set parent node
+  if (!parent_node) parent_node = root;
+  
   // Open file
   FILE *fp;
   if (!(fp = fopen(filename, "r"))) {
@@ -2657,7 +2731,7 @@ ReadSupportHierarchyFile(const char *filename)
       assert(nodes.NEntries() == model_index);
       R3SceneNode *node = new R3SceneNode(this);
       node->SetName(model_name);
-      root->InsertChild(node);
+      parent_node->InsertChild(node);
       nodes.Insert(node);
 
       // Read obj file
@@ -2736,25 +2810,16 @@ ReadSupportHierarchyFile(const char *filename)
 
 
 
-int R3Scene::
-WriteSupportHierarchyFile(const char *filename) const
-{
-  // Not implemented yet
-  RNAbort("Not implemented");
-
-  // Return success
-  return 1;
-}
-
-
-
 ////////////////////////////////////////////////////////////////////////
 // GRAMMAR HIERARCHY FILE I/O FUNCTIONS
 ////////////////////////////////////////////////////////////////////////
 
 int R3Scene::
-ReadGrammarHierarchyFile(const char *filename)
+ReadGrammarHierarchyFile(const char *filename, R3SceneNode *parent_node)
 {
+  // Get/set parent node
+  if (!parent_node) parent_node = root;
+
   // Open file
   FILE *fp;
   if (!(fp = fopen(filename, "r"))) {
@@ -2838,7 +2903,7 @@ ReadGrammarHierarchyFile(const char *filename)
 
       // Insert root of this parse as child of root
       R3SceneNode *node = parsed_nodes.Kth(root_index);
-      root->InsertChild(node);
+      parent_node->InsertChild(node);
     }
     else if (!strcmp(keyword, "parent")) {
       // Read fields
@@ -2913,25 +2978,16 @@ ReadGrammarHierarchyFile(const char *filename)
 
 
 
-int R3Scene::
-WriteGrammarHierarchyFile(const char *filename) const
-{
-  // Not implemented yet
-  RNAbort("Not implemented");
-
-  // Return success
-  return 1;
-}
-
-
-
 ////////////////////////////////////////////////////////////////////////
 // PARSE FILE I/O FUNCTIONS
 ////////////////////////////////////////////////////////////////////////
 
 int R3Scene::
-ReadParseFile(const char *filename)
+ReadParseFile(const char *filename, R3SceneNode *parent_node)
 {
+  // Get/set parent node
+  if (!parent_node) parent_node = root;
+
   // Open file
   FILE *fp;
   if (!(fp = fopen(filename, "r"))) {
@@ -2983,7 +3039,7 @@ ReadParseFile(const char *filename)
 
         // Create node
         R3SceneNode *node = new R3SceneNode(this);
-        root->InsertChild(node);
+        parent_node->InsertChild(node);
 
         // Create shape element
         R3Shape *shape = shapes.Kth(model_index);
@@ -3051,25 +3107,16 @@ ReadParseFile(const char *filename)
 
 
 
-int R3Scene::
-WriteParseFile(const char *filename) const
-{
-  // Not implemented yet
-  RNAbort("Not implemented");
-
-  // Return success
-  return 1;
-}
-
-
-
 ////////////////////////////////////////////////////////////////////////
 // RECTANGLE FILE I/O FUNCTIONS
 ////////////////////////////////////////////////////////////////////////
 
 int R3Scene::
-ReadRectangleFile(const char *filename)
+ReadRectangleFile(const char *filename, R3SceneNode *parent_node)
 {
+  // Get/check parent node
+  if (!parent_node) parent_node = root;
+
   // Open file
   FILE *fp;
   if (!(fp = fopen(filename, "r"))) {
@@ -3100,7 +3147,7 @@ ReadRectangleFile(const char *filename)
 
     // Create node
     R3SceneNode *node = new R3SceneNode(this);
-    root->InsertChild(node);
+    parent_node->InsertChild(node);
 
     // Create shape element
     RNArray<R3Triangle *> triangles;
@@ -3261,7 +3308,7 @@ ParseSUNCGMaterials(R3Scene *scene,
       R3Brdf *output_brdf = NULL;
       if (input_brdf) output_brdf = new R3Brdf(*input_brdf);
       else if (*diffuse_string) output_brdf = new R3Brdf();
-      scene->InsertBrdf(output_brdf);
+      if (output_brdf) scene->InsertBrdf(output_brdf);
       if (*diffuse_string) {
         long int b = strtol(&diffuse_string[5], NULL, 16); diffuse_string[5] = '\0';
         long int g = strtol(&diffuse_string[3], NULL, 16); diffuse_string[3] = '\0';
@@ -3272,26 +3319,27 @@ ParseSUNCGMaterials(R3Scene *scene,
 
       // Create output texture
       R2Texture *output_texture = NULL;
-      if (input_texture) {
-        const char *texture_filename = input_texture->Filename();
-        if (!texture_symbol_table.Find(texture_filename, &output_texture)) {
-          output_texture = new R2Texture(*input_texture);
-          scene->InsertTexture(output_texture);
-          texture_symbol_table.Insert(texture_filename, output_texture);
-        }
-      }
-      else if (*texture_name) {
+      if (*texture_name) {
         char texture_filename[1024];
         const char *texture_directory = "../../texture";
         sprintf(texture_filename, "%s/%s.png", texture_directory, texture_name);
         if (!RNFileExists(texture_filename)) sprintf(texture_filename, "%s/%s.jpg", texture_directory, texture_name);
         if (!texture_symbol_table.Find(texture_filename, &output_texture)) {
+          if (input_texture) output_texture = new R2Texture(*input_texture);
+          else output_texture = new R2Texture();
           R2Image *image = new R2Image();
           if (!image->Read(texture_filename)) return 0;
-          output_texture = new R2Texture();
           output_texture->SetImage(image);
           output_texture->SetFilename(texture_filename);
           output_texture->SetName(texture_name);
+          scene->InsertTexture(output_texture);
+          texture_symbol_table.Insert(texture_filename, output_texture);
+        }
+      }
+      else if (input_texture) {
+        const char *texture_filename = input_texture->Filename();
+        if (!texture_symbol_table.Find(texture_filename, &output_texture)) {
+          output_texture = new R2Texture(*input_texture);
           scene->InsertTexture(output_texture);
           texture_symbol_table.Insert(texture_filename, output_texture);
         }
@@ -3377,12 +3425,13 @@ CreateBox(R3Scene *scene, R3SceneNode *node,
 
 
 int R3Scene::
-ReadSUNCGFile(const char *filename)
+ReadSUNCGFile(const char *filename, R3SceneNode *parent_node)
 {
   // Useful variables
   const char *input_data_directory = "../..";
   RNSymbolTable<R2Texture *> texture_symbol_table;
   RNSymbolTable<R3Scene *> model_symbol_table;
+  if (!parent_node) parent_node = root;
   
   // Open file
   FILE* fp = fopen(filename, "rb");
@@ -3467,7 +3516,7 @@ ReadSUNCGFile(const char *filename)
   }
   
   // Create scene node 
-  R3SceneNode *scene_node = Root();
+  R3SceneNode *scene_node = parent_node;
   scene_node->SetName(scene_id);
 
   // Set scene transformation
