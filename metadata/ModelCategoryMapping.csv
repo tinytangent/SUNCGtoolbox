@@ -640,7 +640,7 @@ index,model_id,fine_grained_class,coarse_grained_class,empty_struct_obj,nyuv2_40
 638,763,door,door,2,door,n03221720,door.n.01
 639,764,door,door,2,door,n03221720,door.n.01
 640,765,garage_door,garage_door,2,door,-,-
-641,766,door,door,2,door,n03221720,door.n.01
+641,766,window,window,2,window,n04587648,window.n.01
 642,767,window,window,2,window,n04587648,window.n.01
 643,768,door,door,2,door,n03221720,door.n.01
 644,769,door,door,2,door,n03221720,door.n.01
