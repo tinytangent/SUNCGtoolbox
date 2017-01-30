@@ -52,9 +52,10 @@ house.json
         - "dimensions": dimensions of box in scene space units for Box only
         - "transform": 4x4 column-major transformation matrix from object coordinates to scene coordinates
         - "isMirrored": boolean variable indicating whether we need to reverse normals due to flipping
-        - "roomType": for room nodes only (array of strings) 
+        - "roomTypes": for room nodes only (array of strings) 
         - "hideCeiling": boolean
         - "hideFloor": boolean 
+        - "hideWalls": boolean 
         - "nodeIndices": indicates (itemIdx) which nodes are belong to this room starts with zero
         - "state": different state from base model 0=open, 1=closed
 
