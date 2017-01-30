@@ -2,11 +2,11 @@
 We provide a simple C++ based toolbox for the SUNCG dataset.  
 Please see our [webpage](http://suncg.cs.princeton.edu) and [paper](https://arxiv.org/pdf/1611.08974v1.pdf) for more details about the data and downloads.
 ### Contents
-0. [Data Organization](#Data Organization)
-0. [Data Format](#Data Format)
-0. [C++ Toolbox](#C++ Toolbox)
-0. [Basic Functionalities](#Basic Functionalities)
-0. [Resources](#Resources)
+0. [Data Organization](#data-organization)
+0. [Data Format](#data-format)
+0. [C++ Toolbox](#c++-toolbox)
+0. [Basic Functionalities](#basic-functionalities)
+0. [Resources](#resources)
 
 ### Data Organization 
 The downloaded and unzipped SUNCG files should be organized as follows:
