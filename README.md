@@ -138,8 +138,7 @@ It will write out "house.obj" and "house.mtl" in the current folder.
 #### Generating Cameras
 
 ```shell
-cd data_root/
-ts/<sceneid>/
+cd data_root/house/<sceneid>/
 gaps/bin/x86_64/scn2cam house.json outputcamerasfile  -categories ModelCategoryMapping.csv  -v
 ```
 
