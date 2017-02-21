@@ -106,7 +106,7 @@ make mesa
 
 ```shell
 cd data_root/house/<sceneid>/
-gaps/bin/x86_64/sceneview house.json -v 
+gaps/bin/x86_64/scnview house.json -v 
 ```
 
 Camera Controls
@@ -129,7 +129,7 @@ Other function keys
 
 ```shell
 cd data_root/house/<sceneid>/
-gaps/bin/x86_64/scn2iscn house.json house.obj
+gaps/bin/x86_64/scn2scn house.json house.obj
 ```
 
 It will write out "house.obj" and "house.mtl" in the current folder.
@@ -152,7 +152,7 @@ Use the following command to check the generated camera file.
 Press key "c" to show the camera. Press key "v" to go though each view point.
 
 ```shell
-gaps/bin/x86_64/sceneview house.json -cameras outputcamerasfile
+gaps/bin/x86_64/scnview house.json -cameras outputcamerasfile
 ```
 
 
