@@ -197,7 +197,7 @@ If you find SUNCG useful in your research, please consider citing:
     @article{song2016ssc, 
         title= {Semantic Scene Completion from a Single Depth Image}, 
         author= {Song, Shuran and Yu, Fisher and Zeng, Andy and Chang, Angel X and Savva, Manolis and Funkhouser, Thomas}, 
-        journal={arXiv preprint arXiv:1611.08974}, 
+        journal={Proceedings of 29th IEEE Conference on Computer Vision and Pattern Recognition}, 
         year={2016} 
     }
 
