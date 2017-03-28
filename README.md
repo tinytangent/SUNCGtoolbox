@@ -204,7 +204,7 @@ If you find SUNCG useful in your research, please consider citing:
 
 
 ### GAPS README ###
-This toolbox is adapted from [GAPS](github.com/tomfunkhouser/gaps) written by [Thomas Funkhouser](http://www.cs.princeton.edu/~funk/). Here is the orignal GAPS README:
+This toolbox is adapted from GAPS written by [Thomas Funkhouser](http://www.cs.princeton.edu/~funk/). Here is the orignal GAPS README:
 
 GAPS Users -
 
