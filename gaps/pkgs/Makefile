@@ -14,7 +14,6 @@ PKG_LIBS= \
   $(LIB_DIR)/libR3Graphics.a \
   $(LIB_DIR)/libR3Shapes.a \
   $(LIB_DIR)/libR2Shapes.a \
-  $(LIB_DIR)/libRNMath.a \
   $(LIB_DIR)/libRNBasics.a \
   $(LIB_DIR)/libjpeg.a \
   $(LIB_DIR)/libpng.a
@@ -47,7 +46,6 @@ release:
 
 target: 
 	cd RNBasics; $(MAKE) $(TARGET)
-	cd RNMath; $(MAKE) $(TARGET)
 	cd R2Shapes; $(MAKE) $(TARGET)
 	cd R3Shapes; $(MAKE) $(TARGET)
 	cd R3Graphics; $(MAKE) $(TARGET)
