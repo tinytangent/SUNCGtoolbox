@@ -2,7 +2,7 @@
 We provide a simple C++ based toolbox for the SUNCG dataset.  
 Please see our [webpage](http://suncg.cs.princeton.edu) and [paper](https://arxiv.org/pdf/1611.08974v1.pdf) for more details about the data.
 
-If you are a researcher and would like to get access to the data, please print and sign this [agreement](http://suncg.cs.princeton.edu/form.pdf)  and email it to Shuran Song: shurans [at] princeton [dot] edu. 
+If you are a researcher and would like to get access to the data, please print and sign this [agreement](http://suncg.cs.princeton.edu/form.pdf)  and email it to suncgteam@googlegroups.com. 
 
 ### Contents
 0. [Data Organization](#data-organization)
