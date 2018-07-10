@@ -4,12 +4,25 @@ Please see our [webpage](http://suncg.cs.princeton.edu) and [paper](https://arxi
 
 If you are a researcher and would like to get access to the data, please print and sign this [agreement](http://suncg.cs.princeton.edu/form.pdf)  and email it to suncgteam@googlegroups.com. 
 
+### Bibtex
+
+If you find SUNCG useful in your research, please consider citing:
+
+    @article{song2016ssc, 
+        title= {Semantic Scene Completion from a Single Depth Image}, 
+        author= {Song, Shuran and Yu, Fisher and Zeng, Andy and Chang, Angel X and Savva, Manolis and Funkhouser, Thomas}, 
+        journal={Proceedings of 29th IEEE Conference on Computer Vision and Pattern Recognition}, 
+        year={2017} 
+    }
+
+
 ### Contents
 0. [Data Organization](#data-organization)
 0. [Data Format](#data-format)
 0. [C++ Toolbox](#c++-toolbox)
 0. [Basic Functionalities](#basic-functionalities)
 0. [Resources](#resources)
+0. [Simulation evironments](#simulation-evironments-support-suncg)
 
 ### Data Organization 
 The downloaded and unzipped SUNCG files should be organized as follows:
@@ -189,18 +202,15 @@ entryway, passenger elevator, freight elevator, aeration, garage and gym.
 Object category mapping between SUNCG to NYU depth V2 40 object class can be found in ``$data_root/metadata/ModelClassMapping.csv``.
 
 
+### Simulation evironments support SUNCG
+[House3D: A Rich and Realistic 3D Environment](https://github.com/facebookresearch/House3D)
+Yi Wu, Yuxin Wu, Georgia Gkioxari and Yuandong Tian 
 
-### Bibtex
+[MINOS: Multimodal Indoor Simulator for Navigation in Complex Environments](https://github.com/minosworld/minos)
+Manolis Savva, Angel X. Chang, Alexey Dosovitskiy, Thomas Funkhouser and Vladlen Koltun 
 
-If you find SUNCG useful in your research, please consider citing:
-
-    @article{song2016ssc, 
-        title= {Semantic Scene Completion from a Single Depth Image}, 
-        author= {Song, Shuran and Yu, Fisher and Zeng, Andy and Chang, Angel X and Savva, Manolis and Funkhouser, Thomas}, 
-        journal={Proceedings of 29th IEEE Conference on Computer Vision and Pattern Recognition}, 
-        year={2017} 
-    }
-
+[HoME: a Household Multimodal Environment](https://github.com/HoME-Platform/home-platform)
+Simon Brodeur, Ethan Perez, Ankesh Anand, Florian Golemo, Luca Celotti, Florian Strub, Jean Rouat, Hugo Larochelle, Aaron Courville 
 
 
 ### GAPS README ###
