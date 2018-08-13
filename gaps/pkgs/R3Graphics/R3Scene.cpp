@@ -3464,15 +3464,15 @@ ReadSUNCGFile(const char *filename, R3SceneNode *parent_node)
   }
 
   // Get/check version
-  char version[1024];
-  strncpy(version, "suncg@1.0.0", 1024);
-  if (GetJsonObjectMember(json_value, &json_root, "version", Json::stringValue)) {
-    strncpy(version, json_value->asString().c_str(), 1024);
-    if (strcmp(version, "suncg@1.0.0")) {
-      fprintf(stderr, "Unrecognized version %s in SUNCG file %s\n", version, filename);
-      return 0;
-    }
-  }
+//   char version[1024];
+//   strncpy(version, "suncg@1.0.0", 1024);
+//   if (GetJsonObjectMember(json_value, &json_root, "version", Json::stringValue)) {
+//     strncpy(version, json_value->asString().c_str(), 1024);
+//     if (strcmp(version, "suncg@1.0.0")) {
+//       fprintf(stderr, "Unrecognized version %s in SUNCG file %s\n", version, filename);
+//       return 0;
+//     }
+//   }
   
   // Get scene id
   char scene_id[1024];
