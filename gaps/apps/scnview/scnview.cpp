@@ -725,6 +725,17 @@ void GLUTKeyboard(unsigned char key, int x, int y)
     show_frame_rate = !show_frame_rate;
     break;
 
+  // keyboard zoom
+  case 'I':
+  case 'i':
+    viewer->ScaleWorld(center, 1.1);
+    break;
+
+  case 'O':
+  case 'o':
+    viewer->ScaleWorld(center, 0.9);
+    break;
+
   case 'V':
   case 'v':
     // Set camera
