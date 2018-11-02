@@ -371,7 +371,7 @@ RemoveChild(R3SceneNode *node)
   R3SceneNode *tail = children.Tail();
   children.EntryContents(entry) = tail;
   tail->parent_index = node->parent_index;
-  children.RemoveTail();
+  //children.RemoveTail(); 
   node->parent = NULL;
   node->parent_index = -1;
 
