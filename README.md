@@ -26,6 +26,8 @@ If you find SUNCG useful in your research, please consider citing:
 
 ### Data Organization 
 The downloaded and unzipped SUNCG files should be organized as follows:
+[!Important!]: If you are running the download script with default arguments, latest release with no room architectures will be downloaded. Run ./download_suncg.py -v v1 -t room to download room architectures.
+
 ```shell
 data_root
     |-- house
